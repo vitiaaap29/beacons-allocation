@@ -27,14 +27,18 @@ function LocationParameters () {
     var self = this;
     self.roomWidth = ko.observable(600);
     self.roomHeight = ko.observable(500);
-    self.signalRadius = ko.observable(10);
+    self.signalRadius = ko.observable(100);
 
     self.recalulate = function () {
-        drawRoom(container, self.roomWidth(), self.roomHeight(), {x: 0, y:0});
-        drawGrid(container, { 
-            width: parseInt(self.roomWidth()), 
-            height: parseInt(self.roomHeight())
-        }, parseInt(self.signalRadius()));
+        // drawRoom(container, self.roomWidth(), self.roomHeight(), {x: 0, y:0});
+        // drawGrid(container, { 
+        //     width: parseInt(self.roomWidth()), 
+        //     height: parseInt(self.roomHeight())
+        // }, parseInt(self.signalRadius()));
+
+        var roomCorner = {x: 0, y: 0};
+        drawGridAndCircle(container, self, roomCorner);
+        drawRoom(container, params.roomWidth(), params.roomHeight(), roomCorner);
     }
 }
 
@@ -46,6 +50,19 @@ var container = d3.select("#room")
     .attr('width', width)
     .attr('height', height);
 container.append('rect');
+
+var roomCorner = {x: 0, y: 0};
+drawGridAndCircle(container, params, roomCorner);
+drawRoom(container, params.roomWidth(), params.roomHeight(), roomCorner);
+
+function drawGridAndCircle (container, params, roomCorner) {
+    var roomSize = {width: params.roomWidth(), height: params.roomHeight()};
+    var signalRadius = params.signalRadius();
+    drawGrid(container, roomSize, signalRadius * 2);
+    var startPoint = calculateStartBeaconPoint(signalRadius, roomCorner);
+    var centersBeacons = generateBeaconLocation(startPoint, roomSize,  signalRadius * 2);
+    drawCircles(container, centersBeacons, signalRadius-1);
+}
 
 function drawRoom (cont, width, height, startPoint) {
     return cont.select('rect')
@@ -80,8 +97,37 @@ function drawLine (holder, startPoint, endPoint) {
 }
 
 function drawCircles (cont, centes, radius) {
-    
+    cont.selectAll("circle").remove();
+    cont.selectAll("circle")
+        .data(centes)
+        .enter().append("circle")
+        .style("stroke", "red")
+        .style("fill", "rgba(0,0,0,0)")
+        .attr("r", radius)
+        .attr("cx", function(d, i){
+            return d.x;
+        })
+        .attr("cy", function (centrePoint) {
+            return centrePoint.y;
+        });
 }
 
-drawRoom(container, params.roomWidth(), params.roomHeight(), {x: 0, y:0});
-drawGrid(container, {width: params.roomWidth(), height: params.roomHeight()}, params.signalRadius());
+function generateBeaconLocation (startPoint, roomSize, stepBetweenBeacons) {
+    var locations = [];
+    for (var xPos = startPoint.x; xPos < roomSize.width; xPos += stepBetweenBeacons) {
+        for (var yPos = startPoint.y; yPos < roomSize.height; yPos += stepBetweenBeacons) {
+            locations.push({x: xPos, y: yPos});
+        }
+    }
+
+    return locations;
+}
+
+function calculateStartBeaconPoint (radius, roomCorner) {
+    var squareFromTwo = Math.sqrt(2);
+    var d = (squareFromTwo - 1) * radius / squareFromTwo;
+    var deltaXy = radius - d;
+    return {
+        x: roomCorner.x + deltaXy, y: roomCorner.y + deltaXy
+    }
+}

@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <script src="http://code.jquery.com/jquery-3.1.1.js"
+        integrity="sha256-16cdPddA6VdVInumRGo6IbivbERE8p7CQR3HzTBuELA="
+        crossorigin="anonymous"></script>
+  <script src="./libs/d3.v4.js"></script>
+  <script type="text/javascript" src='./libs/d3fc.min.js'></script>
+  <script type="text/javascript" src='https://cdnjs.cloudflare.com/ajax/libs/knockout/3.4.1/knockout-min.js'></script>
+  <title>Location beacons</title>
+</head>
+<body>
+    <div class="parameters">
+        <label>Width of room:</label>
+        <input type='number'
+            data-bind='value: roomWidth'/>
+        <label>Height of room:</label>
+        <input type='number'
+            data-bind='value: roomHeight'/>
+        <label>Signal's radius</label>
+        <input
+            type='number' data-bind='value: signalRadius'/>
+        <button data-bind='event: {click: recalulate}'>Recalculate</button>
+    </div>
+    <div>
+        <svg id='room'>
+        </svg>
+    </div>
+    <script type="text/javascript" src='./define-location.js'></script>
+</body>
+</html>

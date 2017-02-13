@@ -23,22 +23,19 @@ ko.bindingHandlers.numeric = {
     }
 };
 
+var START_RADIUS = 100;
+
 function LocationParameters () {
     var self = this;
     self.roomWidth = ko.observable(600);
     self.roomHeight = ko.observable(500);
-    self.signalRadius = ko.observable(100);
+    self.signalRadius = ko.observable(START_RADIUS);
+    self.gridStep = ko.observable(START_RADIUS * 2);
 
     self.recalulate = function () {
-        // drawRoom(container, self.roomWidth(), self.roomHeight(), {x: 0, y:0});
-        // drawGrid(container, { 
-        //     width: parseInt(self.roomWidth()), 
-        //     height: parseInt(self.roomHeight())
-        // }, parseInt(self.signalRadius()));
-
         var roomCorner = {x: 0, y: 0};
-        drawGridAndCircle(container, self, roomCorner);
-        drawRoom(container, params.roomWidth(), params.roomHeight(), roomCorner);
+        drawGridAndCircle(container, self, roomCorner, parseInt(self.gridStep()));
+        drawRoom(container, parseInt(self.roomWidth()), parseInt(self.roomHeight()), roomCorner);
     }
 }
 
@@ -55,12 +52,13 @@ var roomCorner = {x: 0, y: 0};
 drawGridAndCircle(container, params, roomCorner);
 drawRoom(container, params.roomWidth(), params.roomHeight(), roomCorner);
 
-function drawGridAndCircle (container, params, roomCorner) {
-    var roomSize = {width: params.roomWidth(), height: params.roomHeight()};
+function drawGridAndCircle (container, params, roomCorner, gridStep) {
     var signalRadius = params.signalRadius();
+    gridStep = gridStep || (signalRadius * 2);
+    var roomSize = {width: params.roomWidth(), height: params.roomHeight()};
     drawGrid(container, roomSize, signalRadius * 2);
     var startPoint = calculateStartBeaconPoint(signalRadius, roomCorner);
-    var centersBeacons = generateBeaconLocation(startPoint, roomSize,  signalRadius * 2);
+    var centersBeacons = generateBeaconLocation(startPoint, roomSize,  gridStep);
     drawCircles(container, centersBeacons, signalRadius-1);
 }
 

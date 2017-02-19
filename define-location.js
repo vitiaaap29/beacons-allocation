@@ -32,17 +32,18 @@ function LocationParameters () {
     self.roomHeight = ko.observable(500);
     self.signalRadius = ko.observable(START_RADIUS);
     self.gridStep = ko.observable(START_RADIUS * 2);
-    self.coverage = ko.observable('0.00');
     self.allowNotCoverage = ko.observable(ALLOW_NOT_COVERAGE);
 
     self.recalulate = function () {
-        var roomCorner = {x: 0, y: 0};
-        var centersBeacons = drawGridAndCircles(container, self, roomCorner, parseInt(self.gridStep()));
-        var roomSize = {width: parseInt(self.roomWidth()), height: parseInt(self.roomHeight())};
-        drawRoom(container, roomSize.width, roomSize.height, roomCorner);
-        var signalRadius = parseInt(self.signalRadius());
-        var coverage = calculateCoverage(roomSize, signalRadius, centersBeacons);
-        self.coverage(coverage);
+        do {
+            self.gridStep(self.gridStep() - 1);
+            var roomCorner = {x: 0, y: 0};
+            var centersBeacons = drawGridAndCircles(container, self, roomCorner, parseInt(self.gridStep()));
+            var roomSize = {width: parseInt(self.roomWidth()), height: parseInt(self.roomHeight())};
+            drawRoom(container, roomSize.width, roomSize.height, roomCorner);
+            var signalRadius = parseInt(self.signalRadius());
+            var coverage = calculateCoverage(roomSize, signalRadius, centersBeacons);
+        }while (coverage < 1 - self.allowNotCoverage());
     }
 }
 
@@ -65,7 +66,7 @@ function drawGridAndCircles (container, params, roomCorner, gridStep) {
     var roomSize = {width: params.roomWidth(), height: params.roomHeight()};
     var startPoint = calculateStartBeaconPoint(signalRadius, roomCorner);
     drawGrid(container, roomSize, gridStep, startPoint);
-    var centersBeacons = generateBeaconLocation(startPoint, roomSize,  gridStep);
+    var centersBeacons = generateBeaconLocation(startPoint, roomSize,  gridStep, signalRadius);
     drawCircles(container, centersBeacons, signalRadius-1);
     return centersBeacons;
 }
@@ -118,10 +119,16 @@ function drawCircles (cont, centes, radius) {
         });
 }
 
-function generateBeaconLocation (startPoint, roomSize, stepBetweenBeacons) {
+function generateBeaconLocation (startPoint, roomSize, stepBetweenBeacons, radius) {
     var locations = [];
-    for (var xPos = startPoint.x; xPos < roomSize.width; xPos += stepBetweenBeacons) {
-        for (var yPos = startPoint.y; yPos < roomSize.height; yPos += stepBetweenBeacons) {
+    for (var xPos = startPoint.x; xPos < roomSize.width + radius; xPos += stepBetweenBeacons) {
+        for (var yPos = startPoint.y; yPos < roomSize.height + radius; yPos += stepBetweenBeacons) {
+            if (xPos > roomSize.width) {
+                xPos = roomSize.width;
+            }
+            if (yPos > roomSize.height) {
+                yPos = roomSize.height;
+            }
             locations.push({x: xPos, y: yPos});
         }
     }
@@ -148,6 +155,7 @@ function calculateCoverage(roomSize, signalRadius, beaconsCenters) {
         return isFillPoit(p, beaconsCenters, signalRadius);
     });
     var coverage =  fillingPoints.length / monterCarloPoints.length;
+    console.log(coverage);
     return coverage;
 }
 

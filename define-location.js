@@ -24,6 +24,7 @@ ko.bindingHandlers.numeric = {
 };
 
 var START_RADIUS = 100;
+var ALLOW_NOT_COVERAGE = 0.4;
 
 function LocationParameters () {
     var self = this;
@@ -31,35 +32,42 @@ function LocationParameters () {
     self.roomHeight = ko.observable(500);
     self.signalRadius = ko.observable(START_RADIUS);
     self.gridStep = ko.observable(START_RADIUS * 2);
+    self.coverage = ko.observable('0.00');
+    self.allowNotCoverage = ko.observable(ALLOW_NOT_COVERAGE);
 
     self.recalulate = function () {
         var roomCorner = {x: 0, y: 0};
-        drawGridAndCircle(container, self, roomCorner, parseInt(self.gridStep()));
-        drawRoom(container, parseInt(self.roomWidth()), parseInt(self.roomHeight()), roomCorner);
+        var centersBeacons = drawGridAndCircles(container, self, roomCorner, parseInt(self.gridStep()));
+        var roomSize = {width: parseInt(self.roomWidth()), height: parseInt(self.roomHeight())};
+        drawRoom(container, roomSize.width, roomSize.height, roomCorner);
+        var signalRadius = parseInt(self.signalRadius());
+        var coverage = calculateCoverage(roomSize, signalRadius, centersBeacons);
+        self.coverage(coverage);
     }
 }
 
 var params = new LocationParameters(); 
 ko.applyBindings(params);
 
-var width = 1000, height = 1000   ;
+var width = 1000, height = 1000;
 var container = d3.select("#room")
     .attr('width', width)
     .attr('height', height);
 container.append('rect');
 
 var roomCorner = {x: 0, y: 0};
-drawGridAndCircle(container, params, roomCorner);
+drawGridAndCircles(container, params, roomCorner);
 drawRoom(container, params.roomWidth(), params.roomHeight(), roomCorner);
 
-function drawGridAndCircle (container, params, roomCorner, gridStep) {
+function drawGridAndCircles (container, params, roomCorner, gridStep) {
     var signalRadius = params.signalRadius();
     gridStep = gridStep || (signalRadius * 2);
     var roomSize = {width: params.roomWidth(), height: params.roomHeight()};
-    drawGrid(container, roomSize, signalRadius * 2);
     var startPoint = calculateStartBeaconPoint(signalRadius, roomCorner);
+    drawGrid(container, roomSize, gridStep, startPoint);
     var centersBeacons = generateBeaconLocation(startPoint, roomSize,  gridStep);
     drawCircles(container, centersBeacons, signalRadius-1);
+    return centersBeacons;
 }
 
 function drawRoom (cont, width, height, startPoint) {
@@ -71,14 +79,14 @@ function drawRoom (cont, width, height, startPoint) {
         .attr('style', 'fill: rgba(0,0,0,0);stroke:black;stroke-width:3');
 }
 
-function drawGrid (cont, roomSize, gridWidth) {
+function drawGrid (cont, roomSize, gridWidth, offset) {
     cont.selectAll('.gridLine').remove();
     var width = roomSize.width;
     var height = roomSize.height;
-    for (var yPos = gridWidth; yPos < height; yPos += gridWidth) {
+    for (var yPos = offset.y; yPos < height; yPos += gridWidth) {
         drawLine(cont, {x: 0, y: yPos}, {x: 0 + width, y: yPos});
     }
-    for (var xPos = gridWidth; xPos < width; xPos += gridWidth) {
+    for (var xPos = offset.x; xPos < width; xPos += gridWidth) {
         drawLine(cont, {x: xPos, y: 0}, {x: xPos, y: 0 + height});
     }
 }
@@ -127,5 +135,45 @@ function calculateStartBeaconPoint (radius, roomCorner) {
     var deltaXy = radius - d;
     return {
         x: roomCorner.x + deltaXy, y: roomCorner.y + deltaXy
+    };
+}
+
+// function placingBeacons(argument) {
+//     // body...
+// }
+
+function calculateCoverage(roomSize, signalRadius, beaconsCenters) {
+    var monterCarloPoints = getMonteCarloPoints(roomSize, signalRadius, 100);
+    var fillingPoints = monterCarloPoints.filter(function (p) {
+        return isFillPoit(p, beaconsCenters, signalRadius);
+    });
+    var coverage =  fillingPoints.length / monterCarloPoints.length;
+    return coverage;
+}
+
+function getMonteCarloPoints(roomSize, signalRadius, countPointPerRadius) {
+    var monterCarloPoints = [];
+    var startPoint = {x: 0, y: 0};
+    var step = signalRadius / countPointPerRadius;
+    for (var x = startPoint.x; x < roomSize.width; x +=step) {
+        for (var y = startPoint.y; y < roomSize.height; y += step) {
+            var currentPoint = {x: x, y: y};
+            monterCarloPoints.push(currentPoint);
+        }
     }
+    return monterCarloPoints;
+}
+
+function isFillPoit (point, centersBeacons, circleRadius) {
+    return _.some(centersBeacons, function (center) {
+        return isPointInsideCircle(center, circleRadius, point);
+    });
+}
+
+function isPointInsideCircle(circleCentre, radius, point) {
+    return square(point.x - circleCentre.x) + square(point.y - circleCentre.y) <= square(radius);
+}
+
+function square(number) {
+    return number * number;
 }

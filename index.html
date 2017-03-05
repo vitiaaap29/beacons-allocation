@@ -8,28 +8,40 @@
     <script src="./libs/d3.v4.js"></script>
     <script type="text/javascript" src='./libs/d3fc.min.js'></script>
     <script type="text/javascript" src='https://cdnjs.cloudflare.com/ajax/libs/knockout/3.4.1/knockout-min.js'></script>
+    <link href="./libs/bootstrap-3.3.7-dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" href="./css/index.css">
+    <script src="./libs/bootstrap-3.3.7-dist/js/bootstrap.min.js"></script>
   <title>Location beacons</title>
 </head>
 <body>
-    <div class="parameters">
-        <label>Width of room:</label>
-        <input type='number'
-            data-bind='value: roomWidth'/>
-        <label>Height of room:</label>
-        <input type='number'
-            data-bind='value: roomHeight'/>
-        <label>Signal's radius</label>
-        <input
-            type='number' data-bind='value: signalRadius'/>
-        <label>Grid step</label>
-        <input type='number' data-bind='value: gridStep'>
-        <button data-bind='event: {click: recalulate}'>Recalculate</button>
-        <label>Allow not coverage</label>
-        <input data-bind='value: allowNotCoverage'></input>
-    </div>
-    <div>
-        <svg id='room'>
-        </svg>
+    <div class="row">
+        <div class="col-md-8 room">
+            <svg id='room'>
+            </svg>
+        </div>
+        <div class="parameters col-md-3">
+            <div class="row">
+                <label>Width of room:</label>
+                <input type='number' data-bind='value: roomWidth'/>
+            </div>
+            <div class="row">
+                <label>Height of room:</label>
+                <input type='number' data-bind='value: roomHeight'/>
+            </div>
+            <div class="row">
+                <label>Signal's radius</label>
+                <input type='number' data-bind='value: signalRadius'/>
+            </div>
+            <div class="row">
+                <label>Grid step</label>
+                <input type='number' data-bind='value: gridStep'>
+            </div>
+            <div class="row">
+                <label>Allow not coverage</label>
+                <input data-bind='value: allowNotCoverage'></input>
+            </div>
+            <button data-bind='event: {click: recalulate}'>Recalculate</button>
+        </div>
     </div>
     <script type="text/javascript" src='./define-location.js'></script>
 </body>

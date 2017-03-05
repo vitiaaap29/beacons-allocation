@@ -72,6 +72,8 @@ function drawGridAndCircles (container, params, roomCorner, gridStep) {
 }
 
 function drawRoom (cont, width, height, startPoint) {
+    cont.attr('width', width + startPoint.x)
+        .attr('height', height + startPoint.y);
     return cont.select('rect')
         .attr("x", startPoint.x)     // x position of the first end of the line
         .attr("y", startPoint.y)      // y position of the first end of the line
